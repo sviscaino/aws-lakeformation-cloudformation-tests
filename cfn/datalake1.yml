@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: S3 and Glue datalake
+Resources:
+  DataLakeAdminUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: admin-user
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  LakeFormationAdminSettings:
+    Type: AWS::LakeFormation::DataLakeSettings
+    DependsOn: DataLakeAdminUser
+    Properties:
+      Admins:
+        - DataLakePrincipalIdentifier: !Sub 'arn:aws:iam::${AWS::AccountId}:user/admin-user'
+  DatalakeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'datalake-${AWS::AccountId}'
+  AthenaOutputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'athena-output-${AWS::AccountId}'
+  DatalakeDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: datalake_db

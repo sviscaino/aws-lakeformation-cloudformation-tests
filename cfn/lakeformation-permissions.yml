@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Set access rights to cross-account table
+Parameters:
+  shownColumns:
+    Type: String
+    Description: Comma separated fields
+  hiddenColumns:
+    Type: String
+    Description: |
+      Comma separated fields.
+      *This is priorized over shownColumns parameter
+  userName:
+    Type: String
+Conditions:
+  hiddenColumnsDeclared: !Not [!Equals [!Ref 'hiddenColumns', '']]
+  notHiddenColumnsDeclared: !Equals [!Ref 'hiddenColumns', '']
+Resources:
+  UserDescribeOnDatabase:
+    Type: AWS::LakeFormation::Permissions
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !Sub 'arn:aws:iam::${AWS::AccountId}:user/${userName}'
+      Permissions:
+        - DESCRIBE
+      Resource:
+        DatabaseResource:
+          Name: datalake_db
+  UserSelectWithHiddenColumns:
+    Type: AWS::LakeFormation::Permissions
+    DependsOn: UserDescribeOnDatabase
+    Condition: hiddenColumnsDeclared
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !Sub 'arn:aws:iam::${AWS::AccountId}:user/${userName}'
+      Permissions:
+        - SELECT
+      Resource:
+        TableWithColumnsResource:
+          DatabaseName: datalake_db
+          Name: account_table
+          ColumnWildcard:
+            ExcludedColumnNames:
+              !Split [',', !Ref hiddenColumns]
+  UserSelectWithShownColumns:
+    Type: AWS::LakeFormation::Permissions
+    DependsOn: UserDescribeOnDatabase
+    Condition: notHiddenColumnsDeclared
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !Sub 'arn:aws:iam::${AWS::AccountId}:user/${userName}'
+      Permissions:
+        - SELECT
+      Resource:
+        TableWithColumnsResource:
+          DatabaseName: datalake_db
+          Name: account_table
+          ColumnNames:
+            !Split [',', !Ref shownColumns]

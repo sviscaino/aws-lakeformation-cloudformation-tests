@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: S3 and Glue datalake
+Resources:
+  AccountTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: datalake_db
+      TableInput:
+        Name: account_table
+        StorageDescriptor:
+          Columns:
+            - Name: id
+              Type: string
+            - Name: firstName
+              Type: string
+            - Name: lastName
+              Type: string
+            - Name: age
+              Type: int
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+            Parameters:
+              serialization.format: '1'
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Location: !Sub 's3://datalake-${AWS::AccountId}/account/'
+  LakeFormationDataLocation:
+    Type: AWS::LakeFormation::Resource
+    DependsOn:
+     - AccountTable
+    Properties:
+      ResourceArn: !Sub 'arn:aws:s3:::datalake-${AWS::AccountId}/account/'
+      UseServiceLinkedRole: true
