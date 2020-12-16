@@ -28,7 +28,7 @@ We first spin up the environment and create:
 
 We then loop on each test scenario:
 - we create an IAM user and access keys for the test,
-- we grant the permissions by creating the CloudFormation stack that grants access to the columns specified in the test ([lakeformation-permissions.py](cfn/lakeformation-permissions.yml)),
+- we grant the permissions by creating the CloudFormation stack that grants access to the columns specified in the test ([lakeformation-permissions.yml](cfn/lakeformation-permissions.yml)),
 - we then potentially update the CloudFormation stack with new parameters,
 - we run an Athena `SELECT * FROM db.table` query with the credentials of the user
 - we compare the output schema of this query with what is expected.
