@@ -2,6 +2,7 @@ import os
 import boto3
 import time
 import pretty_errors
+import re
 from botocore.exceptions import ClientError
 from yaspin import yaspin
 from tests import *
@@ -34,6 +35,7 @@ def deploy_stack(template, stack, **kwargs):
                 break
             time.sleep(5)
         if current_state != 'CREATE_COMPLETE':
+            spinner.fail("⨯")
             raise Exception('stack status was %s' % current_state)
 
 def update_stack(template, stack, **kwargs):
@@ -53,6 +55,7 @@ def update_stack(template, stack, **kwargs):
                 break
             time.sleep(5)
         if current_state != 'UPDATE_COMPLETE' and current_state != 'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS':
+            spinner.fail("⨯")
             raise Exception('stack status was %s' % current_state)
 
 def delete_stack(stack, **kwargs):
@@ -69,13 +72,22 @@ def delete_stack(stack, **kwargs):
                     return
                 current_stack = next(s for s in all_stacks['Stacks'] if s['StackName'] == stack)
                 current_state = current_stack['StackStatus']
+                current_reason = current_stack.get('StackStatusReason')
                 if current_state != 'DELETE_IN_PROGRESS':
                     spinner.ok("✔️")
                     break
                 time.sleep(5)
-            if current_state == 'DELETE_FAILED' and 'RetainResources' not in kwargs:
+            if current_state == 'DELETE_FAILED' and stack.startswith('datalake2') and 'RetainResources' not in kwargs:
+                spinner.fail("⨯")
                 delete_stack(stack, RetainResources=['LakeFormationDataLocation'])
+            elif current_state == 'DELETE_FAILED' and stack.endswith('-lf-stack') and 'RetainResources' not in kwargs:
+                failed_to_delete = re.search('failed to delete: \[([^\]]+)\]', current_reason).group(1)
+                spinner.text = 'failed to delete %s' % failed_to_delete
+                spinner.fail("⨯")
+                revoke_all_lakeformation_permissions(stack.replace('-lf-stack', '-user'))
+                delete_stack(stack, RetainResources=[s.strip() for s in failed_to_delete.split(',')])
             elif current_state != 'DELETE_COMPLETE':
+                spinner.fail("⨯")
                 raise Exception('stack status was %s' % current_state)
 
 def upload_directory_s3(path, bucket):
@@ -165,3 +177,25 @@ def run_test(i, athena):
         else:
             spinner.text = '%s %sFAIL%s - expected %s, got %s' % (prefix, fg('red'), attr('reset'), ",".join(expected), ",".join(columns))
             spinner.fail("⨯")
+
+def revoke_all_lakeformation_permissions(user_name):
+    with yaspin(text='revoking all Lake Formation permissions as stack delete failed') as spinner:
+        table_permissions = lfn.list_permissions(
+            Principal = {'DataLakePrincipalIdentifier': 'arn:aws:iam::%s:user/%s' % (account_id, user_name)},
+            Resource = {
+                'Table':{
+                    'DatabaseName': 'datalake_db',
+                    'Name': 'account_table'
+                }
+            }
+        )['PrincipalResourcePermissions']
+        for permission in table_permissions:
+            lfn.revoke_permissions(**permission)
+
+        db_permissions = lfn.list_permissions(
+            Principal={'DataLakePrincipalIdentifier': 'arn:aws:iam::%s:user/%s' % (account_id, user_name)},
+            Resource={'Database': {'Name': 'datalake_db'}}
+        )['PrincipalResourcePermissions']
+        for permission in db_permissions:
+            lfn.revoke_permissions(**permission)
+        spinner.ok("✔️")

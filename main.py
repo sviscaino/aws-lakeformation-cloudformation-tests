@@ -15,8 +15,12 @@ if not bucket_exists(artifacts_bucket):
 
 for i, test in enumerate(tests):
     user_name = 'test%d-user' % i
+    try:
+        delete_stack('test%d-lf-stack' % i)
+    except:
+        revoke_all_lakeformation_permissions('test%d-stack' % i)
+        delete_stack('test%d-lf-stack' % i, RetainResources=[''])
     delete_stack('test%d-stack' % i)
-    delete_stack('test%d-lf-stack' % i)
     deploy_stack('iam-user', 'test%d-stack' % i, userName=user_name)
     deploy_stack(
         'lakeformation-permissions',

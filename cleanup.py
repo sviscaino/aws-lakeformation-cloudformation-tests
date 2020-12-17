@@ -7,8 +7,8 @@ from tests import *
 from botocore.config import Config
 
 for i, _ in enumerate(tests):
-    delete_stack('test%d-stack' % i)
     delete_stack('test%d-lf-stack' % i)
+    delete_stack('test%d-stack' % i)
 
 empty_bucket(artifacts_bucket)
 delete_bucket(artifacts_bucket)
