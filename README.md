@@ -43,13 +43,11 @@ Test scenarios are located in `tests.py`.
 | 2    | included= / excluded=age             | (no update)                                   | id,firstName,lastName                         | id,firstName,lastName         | PASS   |
 | 3    | included=id,firstName / excluded=age | (no update)                                   | id,firstName,lastName (excluded has priority) | id,firstName,lastName         | PASS   |
 | 4    | included=id,lastName / excluded=     | included=id,firstName,lastName / excluded=    | id,firstName,lastName                         | id,firstName,lastName         | PASS   |
-| 5    | included=id,lastName / excluded=     | included=id,lastName / excluded=age           | id,firstName,lastName (excluded has priority) |                               | FAIL   |
-| 6    | included= / excluded=age             | included= / excluded=id,age                   | firstName,lastName                            |                               | FAIL   |
-| 7    | included= / excluded=age             | included=firstName / excluded=age             | id,firstName,lastName (excluded has priority) |                               | FAIL   |
-| 8    | included= / excluded=age             | included=firstName / excluded=id,age          | firstName,lastName (excluded has priority)    |                               | FAIL   |
-| 9    | included=id,lastName / excluded=age  | included=firstName,lastName / excluded=id,age | firstName,lastName (excluded has priority)    |                               | FAIL   |
-| 10   | included=id,lastName / excluded=age  | included=id,firstName,lastName / excluded=age | id,firstName,lastName                         |                               | FAIL   |
-| 11   | included=id,firstName / excluded=    | included=id,lastName / excluded=              | id,lastName                                   | id,firstName,lastName         | FAIL   |
+| 5    | included=id,lastName / excluded=     | included=id,lastName / excluded=age           | id,firstName,lastName (excluded has priority) | firstName                     | FAIL   |
+| 6    | included= / excluded=age             | included= / excluded=id,age                   | firstName,lastName                            | id,firstName,lastName         | FAIL   |
+| 7    | included= / excluded=age             | included=firstName / excluded=id,age          | firstName,lastName (excluded has priority)    | id,firstName,lastName         | FAIL   |
+| 8    | included=id,lastName / excluded=age  | included=firstName,lastName / excluded=id,age | firstName,lastName (excluded has priority)    | id,firstName,lastName         | FAIL   |
+| 9    | included=id,firstName / excluded=    | included=id,lastName / excluded=              | id,lastName                                   | id,firstName,lastName         | FAIL   |
 
 ## Cleanup
 
