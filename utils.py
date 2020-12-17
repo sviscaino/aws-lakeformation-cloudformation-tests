@@ -3,7 +3,6 @@ import boto3
 import time
 import pretty_errors
 import re
-from botocore.exceptions import ClientError
 from yaspin import yaspin
 from tests import *
 from colored import fg, attr

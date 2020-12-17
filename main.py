@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import os
-import yaml
 import boto3
 from utils import *
 from tests import *
-from botocore.config import Config
 
 if not bucket_exists(artifacts_bucket):
     create_artifacts_bucket()
